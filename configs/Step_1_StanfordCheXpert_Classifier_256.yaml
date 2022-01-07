@@ -1,0 +1,60 @@
+###########
+# Classifier #
+###########
+# CSV with File names and labels for training set
+train: '/ocean/projects/asc170022p/shared/Data/chestXRayDatasets/StanfordCheXpert/CheXpert-v1.0-small/train.csv'
+# CSV with File names and labels for test set
+test: '/ocean/projects/asc170022p/shared/Data/chestXRayDatasets/StanfordCheXpert/CheXpert-v1.0-small/valid.csv'
+# Name of the column in CSV with image file names
+path_column: 'Path'
+#Directory where images are saved
+image_dir: '/ocean/projects/asc170022p/shared/Data/chestXRayDatasets/StanfordCheXpert'
+
+#categories name
+categories: 'Lung Lesion,Pleural Effusion,Edema,Cardiomegaly,Consolidation,Support Devices,No Finding,Pneumonia,Fracture,Atelectasis,Pneumothorax,Enlarged Cardiomediastinum,Lung Opacity,Pleural Other'
+
+# Directory where log files from tensorboard summary and checkpoints are saved
+log_dir: 'output/classifier'
+# Name of the experiment
+name: 'StanfordCheXpert_256'
+classifier_type: 'DenseNet'
+# For  Stanford CheXpert dataset use: False. While Testing on MIMIC: use True
+do_center_crop: True
+num_channel: 1
+num_class: 14
+input_size: 256
+crop_size: 225
+batch_size: 100
+epochs: 10
+seed: 0
+# Replace the uncertain label i.e, -1 with this value
+uncertain_label: 0
+# Path to the directory to be used for reading the checkpoint. Use '' to train from scratch.
+ckpt_dir_continue: 'output/classifier/StanfordCheXpert_256'
+
+#Parameters for pre-processing the training dataset
+# To upsample a low-frequency class, provide class names which are doubled
+training_columns_to_repeat: ''
+# To use weighted cross entropy loss with per batch weights
+weights_in_batch: 0
+only_frontal: 1
+
+
+# Parameters used in test mode
+# Name of the folder where results are saved.
+# Full path: log_dir/ name / output_folder_name
+output_folder_name: 'Classifier_Output_MIMIC_Concepts/interstitial_marking'
+
+# Do we save the activations as well
+feature: True
+feature_names: 'dense_2,dense_3,dense_4'
+# Name of the numpy array with locations of the images for which we need to save the results.
+names: '/ocean/projects/asc170022p/singla/ExplainingBBSmoothly/output/classifier/StanfordCheXpert_256/Classifier_Output_MIMIC_Concepts/interstitial_marking/negative_names.npy'
+# To save results for files provided in a CSV
+# We assume the category names are same as provided before
+# Choose True to save results for files in CSV. And False to save results on train or test from Stanford ChestXpert. Also provide partition in case its False
+output_csv: '/ocean/projects/asc170022p/singla/ExplainingBBSmoothly/data/MIMIC_CXR_PA_AP_views_image_report_labels.csv'
+output_csv_names_column: 'lateral_512_jpeg'
+# For original dataset (Stanford Chest xray), save results for train or test. Set partition = '' if names <> ''.
+partition: 'interstitial_marking_negative'
+

@@ -1,0 +1,31 @@
+batch_size: 50
+categories: Lung Lesion,Pleural Effusion,Edema,Cardiomegaly,Consolidation,Support
+  Devices,No Finding,Pneumonia,Fracture,Atelectasis,Pneumothorax,Enlarged Cardiomediastinum,Lung
+  Opacity,Pleural Other
+ckpt_dir_continue: output/classifier/StanfordCheXpert_256
+classifier_type: DenseNet
+crop_size: 225
+do_center_crop: true
+epochs: 10
+feature: true
+feature_names: dense_2,dense_3,dense_4
+image_dir: /ocean/projects/asc170022p/shared/Data/chestXRayDatasets/StanfordCheXpert
+input_size: 256
+log_dir: output/classifier
+name: StanfordCheXpert_256
+names: /ocean/projects/asc170022p/singla/ExplainingBBSmoothly/output/classifier/StanfordCheXpert_256/Classifier_Output_MIMIC_Concepts/cardiac
+  silhouette/negative_names.npy
+num_channel: 1
+num_class: 14
+only_frontal: 1
+output_csv: /ocean/projects/asc170022p/singla/ExplainingBBSmoothly/data/MIMIC_CXR_PA_AP_views_image_report_labels.csv
+output_csv_names_column: lateral_512_jpeg
+output_folder_name: Classifier_Output_MIMIC_Concepts/cardiac silhouette
+partition: cardiac silhouette_negative
+path_column: Path
+seed: 0
+test: /ocean/projects/asc170022p/shared/Data/chestXRayDatasets/StanfordCheXpert/CheXpert-v1.0-small/valid.csv
+train: /ocean/projects/asc170022p/shared/Data/chestXRayDatasets/StanfordCheXpert/CheXpert-v1.0-small/train.csv
+training_columns_to_repeat: ''
+uncertain_label: 0
+weights_in_batch: 0

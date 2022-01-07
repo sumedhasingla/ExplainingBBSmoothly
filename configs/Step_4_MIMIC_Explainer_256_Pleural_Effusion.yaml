@@ -1,0 +1,45 @@
+###########
+# Explainer #
+###########
+image_dir: ''
+image_label_dict: 'output/classifier/StanfordCheXpert_256/Explainer_MIMIC_Pleural_Effusion/list_attr_Pleural_Effusion.txt'
+unet_experiment: 'output/segmentation/JSRT_256/Lung/ckpt_dir'
+cls_experiment: 'output/classifier/StanfordCheXpert_256' 
+log_dir: 'output/classifier/StanfordCheXpert_256' 
+name: 'Explainer_MIMIC_Pleural_Effusion'
+
+#Model
+seed: 0
+discriminator_type: 'Discriminator_Ordinal'
+cls_loss_type : 'kl'
+unet_loss_type: 'weighted'
+num_channel: 1
+num_class: 14
+num_bins: 10
+target_class: 1
+# double check this
+input_size: 256
+crop_size: 225
+batch_size: 8
+epochs: 300
+lambda_GAN: 1
+lambda_cyc: 100
+lambda_cls: 1
+# Save summary after how many iterations
+save_summary: 500
+
+ckpt_dir_continue: 'Explainer_MIMIC_Pleural_Effusion'
+
+# number of samples to save while testing
+count_to_save: 700
+# Path of the numpy array with locations of the images for which we need to save the results.
+names_to_save: ''
+# Path of the numpy array with actual images for which we need to save the results. N x input_size x input_size x num_channel
+img_to_save: ''
+
+suffix: ''
+test_dir: ''
+
+# Do we save the activations from the classifier?
+feature: False
+feature_names: 'dense_2,dense_3,dense_4'

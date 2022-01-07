@@ -44,18 +44,13 @@ def read_data_file(file_path, image_dir=''):
     file.close()
     return attr_names, attr_list
 
-def load_images_and_labels(imgs_names, image_dir, n_class, attr_list, input_size=128, num_channel=3, do_center_crop=False, uncertain = 0, crop_size = 450, read_mask=False):
+def load_images_and_labels(imgs_names, image_dir, input_size, n_class=-1, attr_list=None, crop_size = -1, num_channel =1, uncertain = 0, normalize = True):
     imgs = np.zeros((imgs_names.shape[0], input_size, input_size, num_channel), dtype=np.float32)
-    labels = np.zeros((imgs_names.shape[0], n_class), dtype=np.float32)
-    if read_mask:
-        masks = np.zeros((imgs_names.shape[0], input_size, input_size,num_channel), dtype=np.float32)
+    if attr_list is not None:
+        labels = np.zeros((imgs_names.shape[0], n_class), dtype=np.float32)
     for i, img_name in tqdm(enumerate(imgs_names)):
         try:
             img = scm.imread(os.path.join(image_dir, img_name))
-            if read_mask:
-                mask_file_name = img_name.split('.')[0]
-                mask_file_name = mask_file_name+'_256_256_SD_mask.npy'
-                mask = np.load(os.path.join(image_dir, mask_file_name))
         except:
             print("Error in reading image: ", img_name)
             if i == 0:
@@ -64,90 +59,27 @@ def load_images_and_labels(imgs_names, image_dir, n_class, attr_list, input_size
                 a=i-1
             img = scm.imread(os.path.join(image_dir, imgs_names[a]))
             img_name = imgs_names[a]
-            if read_mask:
-                mask_file_name = img_name.split('.')[0]
-                mask_file_name = mask_file_name+'_256_256_SD_mask.npy'
-                mask = np.load(os.path.join(image_dir, mask_file_name))
-                
-                
-        if do_center_crop and input_size == 128:
-            img = crop_center(img, 150,150)
-        elif do_center_crop and input_size == 256:
-            img = crop_center(img, crop_size,crop_size)
-            if read_mask:
-                mask = crop_center(mask, 200,200)
-                #mask = cv2.resize(mask, dsize=(256, 256), interpolation=cv2.INTER_NEAREST)
-    
         img = scm.imresize(img, [input_size, input_size, num_channel])
+        if crop_size != -1:
+            img = crop_center(img, crop_size,crop_size) 
+            img = scm.imresize(img, [input_size, input_size, num_channel])
         img = np.reshape(img, [input_size,input_size,num_channel])
-        img = img / 255.0 
-        img = img - 0.5
-        img = img * 2.0
-        imgs[i] = img  
-        if read_mask:
-            mask[mask>0]=1
-            mask[mask!=1]=0
-            mask = np.reshape(mask, [input_size,input_size,num_channel])
-            masks[i] = mask
-        try:
-            labels[i] = attr_list[img_name]
-        except:
-            print(img_name)
-            pdb.set_trace()
-    
-    labels[np.where(labels==-1)] = uncertain
-    if read_mask:
-        return imgs, labels, masks
-    return imgs, labels
-
-def load_images(imgs_names, image_dir, input_size=128, num_channel=3, do_center_crop=False, crop_size=450, read_mask=False):
-    imgs = np.zeros((imgs_names.shape[0], input_size, input_size, num_channel), dtype=np.float32)
-    if read_mask:
-        masks = np.zeros((imgs_names.shape[0], input_size, input_size,num_channel), dtype=np.float32)
-    for i, img_name in tqdm(enumerate(imgs_names)):
-        try:
-            img = scm.imread(os.path.join(image_dir, img_name))
-            if len(img.shape) == 3 and img.shape[2] == 3:
-                img = np.mean(img,axis=2)
-            if read_mask:
-                mask_file_name = img_name.split('.')[0]
-                mask_file_name = mask_file_name+'_256_256_SD_mask.npy'
-                mask = np.load(os.path.join(image_dir, mask_file_name))
-        except:
-            print("Error in reading image: ", img_name)
-            if i == 0:
-                a=1
-            else:
-                a=i-1
-            img = scm.imread(os.path.join(image_dir, imgs_names[a]))
-            img_name = imgs_names[a]
-            if read_mask:
-                mask_file_name = img_name.split('.')[0]
-                mask_file_name = mask_file_name+'_256_256_SD_mask.npy'
-                mask = np.load(os.path.join(image_dir, mask_file_name))
-        
-        if do_center_crop and input_size == 128:
-            img = crop_center(img, 150,150)
-        elif do_center_crop and input_size == 256:
-            img = crop_center(img, crop_size,crop_size)
-            if read_mask:
-                mask = crop_center(mask, 200,200)
-                #mask = cv2.resize(mask, dsize=(256, 256), interpolation=cv2.INTER_NEAREST)
-    
-        img = scm.imresize(img, [input_size, input_size, num_channel])
-        img = np.reshape(img, [input_size,input_size,num_channel])
-        img = img / 255.0 
-        img = img - 0.5
-        img = img * 2.0
-        imgs[i] = img
-        if read_mask:
-            mask[mask>0]=1
-            mask[mask!=1]=0
-            mask = np.reshape(mask, [input_size,input_size,num_channel])
-            masks[i] = mask
-    if read_mask:
-        return imgs, masks
-    return imgs
+        if normalize:
+            img = img / 255.0 
+            img = img - 0.5
+            img = img * 2.0
+        imgs[i] = img 
+        if attr_list is not None:
+            try:
+                labels[i] = attr_list[img_name]
+            except:
+                print(img_name)
+                pdb.set_trace()
+    if attr_list is not None:
+        labels[np.where(labels==-1)] = uncertain
+        return imgs, labels
+    else:
+        return imgs
 
 def load_nump(imgs_names, image_dir, input_size=128, num_channel=3, do_center_crop=False, crop_size=400):
     imgs = np.zeros((imgs_names.shape[0], input_size, input_size, num_channel), dtype=np.float32)
@@ -160,8 +92,7 @@ def load_nump(imgs_names, image_dir, input_size=128, num_channel=3, do_center_cr
         img = np.reshape(img, [input_size,input_size,num_channel])
         img[img < int(255/2)]=0
         img[img != 0]=1
-        imgs[i] = img
-        
+        imgs[i] = img        
     return imgs
     
 
@@ -198,81 +129,3 @@ def save_images(realA, realB, fakeB, cycA, sample_file, image_size=128, num_chan
     img = make3d(img, num_channel=num_channel, image_size=image_size, row=5, col=8)                      
     img = inverse_image(img)
     scm.imsave(sample_file, img)
-    
-def process_images_NLM_MontgomeryCXRSet(data_dir, file_name,show=False):
-    try:
-        img = plt.imread(os.path.join(data_dir, 'CXR_png',file_name))
-    except:
-        return
-    mask_l = plt.imread(os.path.join(data_dir, 'ManualMask/leftMask',file_name))
-    mask_r = plt.imread(os.path.join(data_dir, 'ManualMask/rightMask',file_name))
-    mask = mask_l + mask_r
-    mask[mask>0.5]=1
-    mask[mask!=1]=0
-    
-    plt.imshow(img)
-    plt.title(img.shape)
-    if show:
-        plt.show()
-    else:
-        plt.close()
-    row_count = []
-    for i in range(img.shape[0]):
-        row_count.append(np.unique(img[i,:]).shape[0])
-    row_count = np.asarray(row_count)
-    col_count = []
-    for i in range(img.shape[1]):
-        col_count.append(np.unique(img[:,i]).shape[0])
-    col_count = np.asarray(col_count)
-    index = np.where(row_count > 10)
-    min_row = index[0][0]
-    max_row = index[0][-1]
-    index = np.where(col_count > 10)
-    min_col = index[0][0]
-    max_col = index[0][-1]
-    new_img = img[ min_row:max_row,min_col:max_col]
-    new_mask = mask[ min_row:max_row,min_col:max_col]
-    plt.imshow(new_img)
-    plt.title(new_img.shape)
-    if show:
-        plt.show()
-    else:
-        plt.close()
-    h,w = new_img.shape
-    min1 = min(h,w)
-    diff = np.abs(h - w)
-    if diff > 800:
-        diff = diff - 800
-        if h < w:
-            new_img1 = np.zeros([h+diff, w])
-            new_mask1 = np.zeros([h+diff, w])
-            n = int(diff/2)
-            new_img1[n:n+h,:] = new_img
-            new_mask1[n:n+h,:] = new_mask
-        else:
-            new_img1 = np.zeros([h, w+diff])
-            new_mask1 = np.zeros([h, w+diff])
-            n = int(diff/2)
-            new_img1[:,n:n+h] = new_img
-            new_mask1[:,n:n+h] = new_mask
-    else:
-        new_img1=new_img
-        new_mask1 = new_mask
-    plt.imshow(new_img1)
-    plt.title(new_img1.shape)
-    if show:
-        plt.show()
-    else:
-        plt.close()
-    h,w = new_img1.shape
-    min1 = min(h,w)
-    img1 = crop_center(new_img1,cropx=min1,cropy=min1)
-    mask1 = crop_center(new_mask1,cropx=min1,cropy=min1)
-    img2 = np.interp(img1, [np.min(img1),np.max(img1)], [0,255])
-    mask2 = np.interp(mask1, [0,1], [0,255])
-    plt.imshow(img2*mask1)
-    plt.title(img2.shape)
-    plt.show()
-    cv.imwrite(os.path.join(data_dir, 'CXR_png_processed',file_name),img2)
-    cv.imwrite(os.path.join(data_dir, 'CXR_png_processed_Masks',file_name),mask2)
-    return 

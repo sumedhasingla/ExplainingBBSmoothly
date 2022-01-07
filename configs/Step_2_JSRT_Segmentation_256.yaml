@@ -1,0 +1,32 @@
+###########
+# Segmentation UNET #
+###########
+log_dir: 'output/unet/JSRT_256' 
+name: 'Lung'
+# JSRT Dataset
+image_dir: '/ocean/projects/asc170022p/singla/Datasets/JSRT-Data'
+input_csv: '/ocean/projects/asc170022p/singla/Datasets/JSRT-Data/train.csv'
+mask_column: 'Mask'
+img_column: 'input'
+
+#Model
+num_channel: 1
+input_size: 256
+crop_size: -1
+batch_size: 32
+normalize: False
+# Files saved in '/ocean/projects/asc170022p/singla/Datasets/JSRT-Data' are already normalized to be in range [-1, 1]
+epochs: 50
+ckpt_dir_continue: 'output/unet/JSRT_256/Lung'
+
+
+# Parameters used in test mode
+# number of samples to save while testing
+count_to_save: 0
+# file names for which we need to save the segmentation masks
+names_to_save: ''
+suffix: ''
+test_csv: '/ocean/projects/asc170022p/singla/Datasets/JSRT-Data/validation.csv'
+
+
+

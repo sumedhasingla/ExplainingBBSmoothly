@@ -1,0 +1,39 @@
+###########
+# Explainer #
+###########
+image_dir: ''
+image_label_dict: 'output/classifier/StanfordCheXpert_256/Explainer_MIMIC_Cardiomegaly/list_attr_Cardiomegaly.txt'
+unet_experiment: 'output/segmentation/JSRT_256/Lung/ckpt_dir'
+cls_experiment: 'output/classifier/StanfordCheXpert_256' 
+log_dir: 'output/classifier/StanfordCheXpert_256' 
+name: 'Explainer_MIMIC_Cardiomegaly'
+
+#Model
+seed: 0
+discriminator_type: 'Discriminator_Ordinal'
+cls_loss_type : 'kl'
+unet_loss_type: 'weighted'
+num_channel: 1
+num_class: 14
+num_bins: 10
+target_class: 3
+# double check this
+input_size: 256
+crop_size: 225
+batch_size: 8
+epochs: 300
+lambda_GAN: 1
+lambda_cyc: 100
+lambda_cls: 1
+# Save summary after how many iterations
+save_summary: 500
+
+ckpt_dir_continue: 'Explainer_MIMIC_Cardiomegaly'
+
+# number of samples to save while testing
+count_to_save: 700
+names_to_save: ''
+img_to_save: ''
+
+suffix: ''
+test_dir: ''
