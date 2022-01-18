@@ -17,7 +17,8 @@ batch_size: 32
 normalize: False
 # Files saved in '/ocean/projects/asc170022p/singla/Datasets/JSRT-Data' are already normalized to be in range [-1, 1]
 epochs: 50
-ckpt_dir_continue: 'output/unet/JSRT_256/Lung'
+ckpt_dir_continue: 'output/segmentation/JSRT_256/Lung'
+
 
 
 # Parameters used in test mode

@@ -40,4 +40,3 @@ def smooth_l1(logits, targets):
     mask = tf.cast(tf.less(tf.abs(x), 1.0), dtype=tf.float32)
     return 0.5 * tf.square(x) * mask + (tf.abs(x) - 0.5) * (1.0 - mask)
 
-

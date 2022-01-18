@@ -54,8 +54,13 @@ def Train():
     except: pass
     try: os.makedirs(test_dir)
     except: pass
-    
+    if config['test_dir'] == '':
+         config['test_dir'] = test_dir
+    else:
+        config['test_dir'] = os.path.join(main_dir, config['test_dir'])   
     # ============= Experiment Parameters =============
+    if config['feature']:
+        config['feature_names'] = config['feature_names'].split(',')
     image_dir = config['image_dir']
     ckpt_dir_cls = os.path.join(main_dir,config['cls_experiment']   )
     ckpt_dir_unet = os.path.join(main_dir,config['unet_experiment']   )
@@ -114,9 +119,9 @@ def Train():
     fake_target_logits = D(fake_target_img, y_t, config['num_bins'], None)    
     
     # ============= pre-trained classifier =============      
-    real_img_cls_logit_pretrained,  real_img_cls_prediction = pretrained_classifier(x_source, config['num_class'], reuse=False, name='classifier')
-    fake_img_cls_logit_pretrained, fake_img_cls_prediction = pretrained_classifier(fake_target_img, config['num_class'], reuse=True)
-    real_img_recons_cls_logit_pretrained, real_img_recons_cls_prediction = pretrained_classifier(fake_source_img, config['num_class'], reuse=True)
+    real_img_feature_vector,  real_img_cls_prediction = pretrained_classifier(x_source, config['num_class'], reuse=False, name='classifier', return_layers=True, isTrain =False)
+    fake_img_feature_vector, fake_img_cls_prediction = pretrained_classifier(fake_target_img, config['num_class'], reuse=True, return_layers=True, isTrain =False)
+    real_img_recons_feature_vector, real_img_recons_cls_prediction = pretrained_classifier(fake_source_img, config['num_class'], reuse=True, return_layers=True, isTrain =False)
     # ============= pre-trained segmentation =============    
     _, seg_x_source = U(x_source)
     _, seg_x_fake = U(fake_target_img) 
@@ -140,7 +145,8 @@ def Train():
         print("Successful checkpoint upload")
     else:
         print("Failed checkpoint load")
-        sys.exist()
+        print(ckpt_dir_continue)
+        sys.exit()
     # ============= load pre-trained classifier checkpoint =============
     try:
         class_vars = [var for var in slim.get_variables_to_restore() if 'classifier' in var.name]
@@ -164,6 +170,9 @@ def Train():
     print("Unet checkpoint loaded.................",ckpt_name, ckpt_dir_unet )
     
     # ============= Testing =============     
+    real_feature = {}
+    fake_feature = {}
+    np.random.shuffle(data)
     for i in range(data.shape[0] // BATCH_SIZE):
         image_paths = data[i*BATCH_SIZE:(i+1)*BATCH_SIZE]
         if config['img_to_save'] != '':   
@@ -189,17 +198,90 @@ def Train():
         if config['discriminator_type'] == 'Discriminator_Ordinal':
             target_labels = convert_ordinal_to_binary(target_labels,config['num_bins'])
         
-        FAKE_IMG, real_p, fake_p, seg_source, seg_fake = sess.run([fake_target_img, real_img_cls_prediction, fake_img_cls_prediction, seg_x_source, seg_x_fake], feed_dict={y_t: target_labels,  x_source: img_repeat, train_phase: False})
+        fake_img_, real_pred_, fake_pred_, real_seg_, fake_seg_ = sess.run([fake_target_img, real_img_cls_prediction, fake_img_cls_prediction, seg_x_source, seg_x_fake], feed_dict={y_t: target_labels,  x_source: img_repeat, train_phase: False})
         
+        if config['feature']:
+            real_f, fake_f = sess.run([real_img_feature_vector, fake_img_feature_vector], feed_dict={y_t: target_labels,  x_source: img_repeat, train_phase: False})
         
+        if i == 0:
+            names = np.asarray(image_paths)
+            real_img = img
+            fake_img = fake_img_
+            real_pred = real_pred_
+            fake_pred = fake_pred_
+            real_seg = real_seg_
+            fake_seg = fake_seg_
+            if config['feature']:
+                for f in config['feature_names']:
+                    real_feature[f] = real_f[f]
+                    fake_feature[f] = fake_f[f]
+        else:
+            names = np.append(names, np.asarray(image_paths), axis = 0)
+            real_img = np.append(real_img, img, axis = 0)
+            fake_img = np.append(fake_img, fake_img_, axis = 0)
+            real_pred = np.append(real_pred, real_pred_, axis = 0)
+            fake_pred = np.append(fake_pred, fake_pred_, axis = 0)
+            real_seg = np.append(real_seg, real_seg_, axis = 0)
+            fake_seg = np.append(fake_seg, fake_seg_, axis = 0)
+            if config['feature']:
+                for f in config['feature_names']:
+                    real_feature[f] = np.append(real_feature[f],
+                                                np.asarray(real_f[f]),
+                                                axis=0)
+                    fake_feature[f] = np.append(fake_feature[f],
+                                                np.asarray(fake_f[f]),
+                                                axis=0)
         
+        if real_img.shape[0] > config['count_to_save']:
+            break
+        if i % 40 == 0:
+            print(real_img.shape)
+            np.save(os.path.join(test_dir, 'names'+config['suffix']+'.npy'), 
+                    names)
+            np.save(os.path.join(test_dir, 'real_img'+config['suffix']+'.npy'), 
+                    real_img)
+            np.save(os.path.join(test_dir, 'fake_img'+config['suffix']+'.npy'), 
+                    fake_img)
+            np.save(os.path.join(test_dir, 'real_pred'+config['suffix']+'.npy'), 
+                    real_pred)
+            np.save(os.path.join(test_dir, 'fake_pred'+config['suffix']+'.npy'), 
+                    fake_pred)
+            np.save(os.path.join(test_dir, 'real_seg'+config['suffix']+'.npy'), 
+                    real_seg)
+            np.save(os.path.join(test_dir, 'fake_seg'+config['suffix']+'.npy'), 
+                    fake_seg)
+            if config['feature']:
+                for f in config['feature_names']:
+                    np.save(os.path.join(test_dir,
+                                         'real_'+f+config['suffix']+'.npy'),
+                            real_feature[f])
+                    np.save(os.path.join(test_dir,
+                                         'fake_'+f+config['suffix']+'.npy'),
+                            fake_feature[f])
+            
+    np.save(os.path.join(test_dir, 'names'+config['suffix']+'.npy'), 
+            names)
+    np.save(os.path.join(test_dir, 'real_img'+config['suffix']+'.npy'), 
+            real_img)
+    np.save(os.path.join(test_dir, 'fake_img'+config['suffix']+'.npy'), 
+            fake_img)
+    np.save(os.path.join(test_dir, 'real_pred'+config['suffix']+'.npy'), 
+            real_pred)
+    np.save(os.path.join(test_dir, 'fake_pred'+config['suffix']+'.npy'), 
+            fake_pred)
+    np.save(os.path.join(test_dir, 'real_seg'+config['suffix']+'.npy'), 
+            real_seg)
+    np.save(os.path.join(test_dir, 'fake_seg'+config['suffix']+'.npy'), 
+            fake_seg)
+    if config['feature']:
+        for f in config['feature_names']:
+            np.save(os.path.join(test_dir,
+                                 'real_'+f+config['suffix']+'.npy'),
+                    real_feature[f])
+            np.save(os.path.join(test_dir,
+                                 'fake_'+f+config['suffix']+'.npy'),
+                    fake_feature[f])
         
-        
-        
-        
-        
-        
-        
-        
+
 if __name__ == "__main__":
     Train()

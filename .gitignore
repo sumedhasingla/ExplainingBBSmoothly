@@ -2,6 +2,7 @@
 *.csv
 *.jpg
 output/
+Faster_RCNN_TensorFlow/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -8,7 +8,7 @@ from Fast_RCNN.rpn_proposal.utils import read_batch, generate_anchors, pre_proce
 from Fast_RCNN.rpn_proposal.vggnet import vgg_16
 from Fast_RCNN.rpn_proposal.ops import smooth_l1, offset2bbox
 from Fast_RCNN.rpn_proposal.networks import rpn
-
+import pdb
 from Fast_RCNN.fast_rcnn.networks import network
 from Fast_RCNN.fast_rcnn.ops import smooth_l1, xywh2x1y1x2y2
 from Fast_RCNN.fast_rcnn.utils import read_batch as read_batch_rcnn
@@ -26,9 +26,9 @@ np.random.seed(0)
 def Train():    
     parser = argparse.ArgumentParser()
     parser.add_argument(
-    '--config', '-c', default='configs/MIMIC_OD_Pacemaker.yaml')  
+    '--config', '-c', default='configs/Step_3_MIMIC_Object_Detector_256_Costophrenic_Recess.yaml')  
     parser.add_argument(
-    '--main_dir', '-m', default='/ocean/projects/asc170022p/singla/Explanation_XRay')  
+    '--main_dir', '-m', default='/ocean/projects/asc170022p/singla/ExplainingBBSmoothly')  
     args = parser.parse_args()
     main_dir = args.main_dir
     # ============= Load config =============
@@ -79,10 +79,10 @@ def Train():
     
     # ============= Model =============
     with tf.device('/gpu:0'): 
-        imgs = tf.placeholder(tf.float32, [None, IMG_H, IMG_W, 1])
-        bbox_indxs = tf.placeholder(tf.int32, [None, MINIBATCH])
-        masks = tf.placeholder(tf.int32, [None, MINIBATCH])
-        target_bboxes = tf.placeholder(tf.float32, [None, MINIBATCH, 4])
+        imgs = tf.placeholder(tf.float32, [BATCHSIZE, IMG_H, IMG_W, 1])
+        bbox_indxs = tf.placeholder(tf.int32, [BATCHSIZE, MINIBATCH])
+        masks = tf.placeholder(tf.int32, [BATCHSIZE, MINIBATCH])
+        target_bboxes = tf.placeholder(tf.float32, [BATCHSIZE, MINIBATCH, 4])
         learning_rate = tf.placeholder(tf.float32)
 
         vgg_logits = vgg_16(imgs)
@@ -107,8 +107,6 @@ def Train():
     print("VGG16 checkpoint restored", config['vgg_checkpoint'])
     
     saver = tf.train.Saver()
-    import pdb
-    pdb.set_trace()
     # ============= Generate Initial Anchors =============
     anchors = generate_anchors(IMG_H, IMG_W)
     if starting_step == 1:
@@ -128,18 +126,19 @@ def Train():
     # ============= Update Proposal =============
     if starting_step == 2:
         print("******************** STEP-2 *********************************************")
-        import pdb
-        pdb.set_trace()
         cls, reg = cls[0], reg[0]
         scores = tf.nn.softmax(cls)[:, 1]
 
         anchors = tf.constant(anchors, dtype=tf.float32)
+        pdb.set_trace()
         normal_bbox, reverse_bbox = offset2bbox(reg, anchors)
         nms_idxs = tf.image.non_max_suppression(reverse_bbox, scores, max_output_size=2000, iou_threshold=NMS_THRESHOLD)
         bboxes = tf.nn.embedding_lookup(normal_bbox, nms_idxs)[:NUMS_PROPOSAL]
 
         saver.restore(sess, os.path.join(ckpt_dir,"model_rpn_"+name+".ckpt"))
         print("RPN checkpoint restored!!!", os.path.join(ckpt_dir,"model_rpn_"+name+".ckpt"))
+        
+        
         proposal_data = {}
         for idx, filename in enumerate(xml_files):
             img_names = np.asarray([IMG_PATH + filename[:-4] + SUFFIX])
@@ -148,11 +147,12 @@ def Train():
                                         input_size=IMG_W,
                                         crop_size=-1,
                                         num_channel=1)
+            print(img.shape)
             #img = np.array(Image.open(IMG_PATH + filename[:-3] + "jpg").resize([IMG_W, IMG_H]))
             #img = np.expand_dims(img, axis=-1)
-            BBOX,_cls = sess.run([bboxes, scores], feed_dict={imgs: img})
-            _cls = sess.run([ cls], feed_dict={imgs: img})
-            x, y = (BBOX[:, 0:1] + BBOX[:, 2:3]) / 2, (BBOX[:, 1:2] + BBOX[
+            pdb.set_trace()
+            BBOX = sess.run(bboxes, feed_dict={imgs: img})
+            pdb.set_trace()
             x, y = (BBOX[:, 0:1] + BBOX[:, 2:3]) / 2, (BBOX[:, 1:2] + BBOX[:, 3:4]) / 2
             w, h = BBOX[:, 2:3] - BBOX[:, 0:1], BBOX[:, 3:4] - BBOX[:, 1:2]
             BBOX = np.concatenate((x, y, w, h), axis=-1)

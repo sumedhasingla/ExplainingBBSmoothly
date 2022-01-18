@@ -43,10 +43,24 @@ python Step_4_train_explainer.py --config 'configs/Step_4_MIMIC_Explainer_256_Pl
 ```
 
 8. Explore the trained Explanation model and see qualitative results.
+
+**Cardiomegaly**
 ```
 python Step_4_test_explainer.py --config 'configs/Step_4_MIMIC_Explainer_256_Pleural_Effusion.yaml'
-./notebooks/Quantitative_Results.ipynb
+./notebooks/Step_4_Visualize_and_Quantify_Explainer_Results_Cardiomegaly.ipynb
 ```
+Includes
+* Pretrained segmentation network for lung and heart. The segmentation network is trained on JSTR dataset and hence is not perfect on MIMIC dataset. Improving the segmentation network is work in progress.
+* Code to compute Cardio Thoracic Ratio (CTR) using lung + heart segmentation. 
+* Code to create an animated Gif to better visualize the results, on a given subject.
+
+**Pleural Effusion**
+```
+python Step_4_test_explainer.py --config 'configs/Step_4_MIMIC_Explainer_256_Pleural_Effusion.yaml'
+./notebooks/Step_4_Visualize_and_Quantify_Explainer_Results_Pleural_Effusion.ipynb
+```
+Includes:
+* Pre-trained object detector for healthy/blunt costophrenic recess.
 
 ## Generate conceptual explanation
 9. Dissect the trained classification model to identify hidden units which are relevant for a given concept

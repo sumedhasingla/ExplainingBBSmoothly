@@ -1,0 +1,29 @@
+log_dir: "output/ObjectDetector"
+name: "pacemaker"
+image_dir: ""
+XML_PATH: "/ocean/projects/asc170022p/singla/CSV_MIMIC/ObjectDetector_PA/pacemaker/xml/"
+IMG_PATH: "/ocean/projects/asc170022p/singla/CSV_MIMIC/ObjectDetector_PA/pacemaker/img/"
+vgg_checkpoint: "output/classifier/StanfordCheXpert_256_VGG/cp_epoch0.ckpt"
+num_channel: 1
+ckpt_dir_continue: "output/ObjectDetector/pacemaker"
+
+starting_step: 1
+
+CLASSES: ["pacemaker"]
+POOLED_H:  7
+POOLED_W:  7
+
+IMG_H:  256
+IMG_W:  256
+CROP: False
+MINIBATCH:  64
+NUMS_PROPOSAL: 2000
+NMS_THRESHOLD: 0.7
+
+BATCHSIZE:  2
+LEARNING_RATE: 0.001
+WEIGHT_DECAY: 0.0005
+MOMENTUM: 0.9
+EPSILON: 1e-10
+
+SUFFIX: ".jpg"

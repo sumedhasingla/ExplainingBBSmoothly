@@ -16,8 +16,8 @@ unet_loss_type: 'weighted'
 num_channel: 1
 num_class: 14
 num_bins: 10
+# double check the target_class. It is the index of the class for which we are generating explanations.
 target_class: 1
-# double check this
 input_size: 256
 crop_size: 225
 batch_size: 8
@@ -28,18 +28,20 @@ lambda_cls: 1
 # Save summary after how many iterations
 save_summary: 500
 
-ckpt_dir_continue: 'Explainer_MIMIC_Pleural_Effusion'
+ckpt_dir_continue: 'output/classifier/StanfordCheXpert_256/Explainer_MIMIC_Pleural_Effusion'
 
+# Parameters used in test mode
 # number of samples to save while testing
-count_to_save: 700
+count_to_save: 50
 # Path of the numpy array with locations of the images for which we need to save the results.
 names_to_save: ''
 # Path of the numpy array with actual images for which we need to save the results. N x input_size x input_size x num_channel
 img_to_save: ''
-
-suffix: ''
+# Suffix to attach to the output file names
+suffix: '_train_set_1'
+# Path where to save the files. Path is relative to main_dir. Set as '' to choose the default.
 test_dir: ''
 
 # Do we save the activations from the classifier?
-feature: False
-feature_names: 'dense_2,dense_3,dense_4'
+feature: True
+feature_names: 'dense_4'
